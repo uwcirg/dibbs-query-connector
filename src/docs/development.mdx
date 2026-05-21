@@ -63,7 +63,7 @@ Password: QcDev2024!
 
 #### Running the full stack in Docker
 
-The [docker-compose.complete.yaml](../../docker-compose.complete.yaml) file runs Keycloak, Aidbox, PostgreSQL, Flyway, and the Query Connector app entirely in containers. It reuses [docker-compose-dev.yaml](../../docker-compose-dev.yaml) for backends and layers app wiring from the e2e compose file.
+The [docker-compose.complete.yaml](../../docker-compose.complete.yaml) file runs Keycloak, Aidbox, PostgreSQL, Flyway, and the Query Connector app entirely in containers. It includes [docker-compose-dev.yaml](../../docker-compose-dev.yaml) plus [docker-compose.complete.overrides.yaml](../../docker-compose.complete.overrides.yaml) (required by Compose so included services are not redefined in the same file), and adds the app service from the e2e compose file.
 
 1. Complete the [Obtaining API and License Keys](#obtaining-api-and-license-keys) steps and create `.env` from `.env.sample` with `AUTH_DISABLED=false`.
 2. Start the stack: `docker compose -f docker-compose.complete.yaml up -d --build`

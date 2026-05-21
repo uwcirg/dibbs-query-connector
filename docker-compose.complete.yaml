@@ -7,9 +7,6 @@
 # Start:
 #   docker compose -f docker-compose.complete.yaml up -d --build
 #
-# Equivalent (without include):
-#   docker compose -f docker-compose-dev.yaml -f docker-compose.complete.yaml up -d --build
-#
 # Reset DB so vs_dump.sql runs on first init:
 #   docker compose -f docker-compose.complete.yaml down -v
 #
@@ -18,38 +15,11 @@
 #   # until: "Finished configuring Aidbox and database."
 
 include:
-  - docker-compose-dev.yaml
+  - path:
+      - docker-compose-dev.yaml
+      - docker-compose.complete.overrides.yaml
 
 services:
-  db:
-    volumes:
-      - ./vs_dump.sql:/docker-entrypoint-initdb.d/vs_dump.sql
-      - db-data:/var/lib/postgresql
-
-  aidbox:
-    healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          'wget -qO- http://localhost:8080/health | grep -q ''"status":"pass"'' || exit 1',
-        ]
-      interval: 5s
-      timeout: 5s
-      retries: 60
-      start_period: 30s
-
-  aidbox-seeder:
-    environment:
-      - AIDBOX_BASE_URL=http://aidbox:8080
-      - APP_HOSTNAME=http://query-connector:3000
-    depends_on:
-      db:
-        condition: service_healthy
-      aidbox:
-        condition: service_healthy
-      flyway:
-        condition: service_completed_successfully
-
   query-connector:
     extends:
       file: docker-compose-e2e.yaml

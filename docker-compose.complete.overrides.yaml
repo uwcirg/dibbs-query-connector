@@ -1,0 +1,32 @@
+# Overrides for docker-compose-dev.yaml when used by docker-compose.complete.yaml.
+# Merged via include path; do not use this file on its own.
+
+services:
+  db:
+    volumes:
+      - ./vs_dump.sql:/docker-entrypoint-initdb.d/vs_dump.sql
+      - db-data:/var/lib/postgresql
+
+  aidbox:
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          'wget -qO- http://localhost:8080/health | grep -q ''"status":"pass"'' || exit 1',
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 60
+      start_period: 30s
+
+  aidbox-seeder:
+    environment:
+      - AIDBOX_BASE_URL=http://aidbox:8080
+      - APP_HOSTNAME=http://query-connector:3000
+    depends_on:
+      db:
+        condition: service_healthy
+      aidbox:
+        condition: service_healthy
+      flyway:
+        condition: service_completed_successfully
