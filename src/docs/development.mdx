@@ -79,6 +79,23 @@ The [docker-compose.complete.yaml](../../docker-compose.complete.yaml) file runs
 
 On first run, the database is pre-seeded from `vs_dump.sql`. To reload that dump on a fresh database, remove volumes first: `docker compose -f docker-compose.complete.yaml down -v`.
 
+##### Traefik ingress overlay
+
+To expose services via Traefik on the external `external_web` network, merge [docker-compose.ingress.yaml](../../docker-compose.ingress.yaml):
+
+1. Ensure Traefik is running on `external_web` with a `websecure` entrypoint and `letsencrypt` cert resolver.
+2. Create the network if needed: `docker network create external_web`
+3. Set `BASE_DOMAIN` in `.env` to your DNS zone (e.g. `dev.example.com`).
+4. Start: `docker compose -f docker-compose.complete.yaml -f docker-compose.ingress.yaml up -d --build`
+
+| Service | HTTPS host |
+|---------|------------|
+| query-connector | `https://query-connector.${BASE_DOMAIN}` |
+| Aidbox | `https://aidbox.${BASE_DOMAIN}` |
+| Keycloak | `https://keycloak.${BASE_DOMAIN}` |
+
+Host port bindings are removed when the ingress overlay is used; access is via Traefik only.
+
 #### Running with Docker only (app image + dev backends)
 
 1. Download a copy of the Docker image from the Query Connector repository by running `docker pull ghcr.io/cdcgov/dibbs-query-connector/query-connector:latest`.
