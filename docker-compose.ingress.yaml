@@ -22,6 +22,10 @@ services:
       - internal
 
   keycloak:
+    environment:
+      KC_PROXY_HEADERS: xforwarded
+      KC_HOSTNAME: keycloak.${BASE_DOMAIN}
+      KC_HOSTNAME_STRICT: "false"
     labels:
       - traefik.enable=true
       - traefik.docker.network=ingress
