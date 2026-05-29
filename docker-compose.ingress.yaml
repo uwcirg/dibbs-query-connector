@@ -1,0 +1,91 @@
+# Traefik ingress overlay for docker-compose.complete.yaml
+#
+# Prerequisites:
+#   - External network: docker network create external_web  (if missing)
+#   - Traefik on external_web with websecure entrypoint and letsencrypt certresolver
+#   - BASE_DOMAIN in .env (e.g. dev.example.com)
+#
+# Usage:
+#   docker compose -f docker-compose.complete.yaml -f docker-compose.ingress.yaml up -d
+
+services:
+  db:
+    labels:
+      - traefik.enable=false
+    networks:
+      - internal
+
+  flyway:
+    labels:
+      - traefik.enable=false
+    networks:
+      - internal
+
+  keycloak:
+    environment:
+      KC_PROXY_HEADERS: xforwarded
+      KC_HOSTNAME: keycloak.${BASE_DOMAIN}
+      KC_HOSTNAME_STRICT: "false"
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.keycloak-${COMPOSE_PROJECT_NAME}.rule=Host(`keycloak.${BASE_DOMAIN}`)
+      - traefik.http.routers.keycloak-${COMPOSE_PROJECT_NAME}.entrypoints=websecure
+      - traefik.http.routers.keycloak-${COMPOSE_PROJECT_NAME}.tls.certresolver=letsencrypt
+    networks:
+      - ingress
+      - internal
+
+  aidbox_db:
+    labels:
+      - traefik.enable=false
+    networks:
+      - internal
+
+  aidbox:
+    environment:
+      BOX_WEB_BASE_URL: https://aidbox.${BASE_DOMAIN}
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=ingress
+      - traefik.http.routers.aidbox-${COMPOSE_PROJECT_NAME}.rule=Host(`aidbox.${BASE_DOMAIN}`)
+      - traefik.http.routers.aidbox-${COMPOSE_PROJECT_NAME}.entrypoints=websecure
+      - traefik.http.routers.aidbox-${COMPOSE_PROJECT_NAME}.tls.certresolver=letsencrypt
+    expose:
+      - 8080
+    networks:
+      - ingress
+      - internal
+    ports: !override []
+
+  aidbox-seeder:
+    labels:
+      - traefik.enable=false
+    environment:
+      - APP_HOSTNAME=https://query-connector.${BASE_DOMAIN}
+    networks:
+      - internal
+
+  query-connector:
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=ingress
+      - traefik.http.routers.query-connector-${COMPOSE_PROJECT_NAME}.rule=Host(`query-connector.${BASE_DOMAIN}`)
+      - traefik.http.routers.query-connector-${COMPOSE_PROJECT_NAME}.entrypoints=websecure
+      - traefik.http.routers.query-connector-${COMPOSE_PROJECT_NAME}.tls.certresolver=letsencrypt
+      # - traefik.http.services.query-connector-${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=3000
+    environment:
+      - AUTH_URL=https://query-connector.${BASE_DOMAIN}
+      - LOCAL_KEYCLOAK=https://keycloak.${BASE_DOMAIN}/realms/master
+      - AUTH_ISSUER=https://keycloak.${BASE_DOMAIN}/realms/master
+      - APP_HOSTNAME:https://query-connector.${BASE_DOMAIN}
+    expose:
+      - 3000
+    networks:
+      - ingress
+      - internal
+
+networks:
+  internal:
+  ingress:
+    external: true
+    name: external_web
