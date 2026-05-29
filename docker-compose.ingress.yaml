@@ -28,16 +28,12 @@ services:
       KC_HOSTNAME_STRICT: "false"
     labels:
       - traefik.enable=true
-      - traefik.docker.network=ingress
       - traefik.http.routers.keycloak-${COMPOSE_PROJECT_NAME}.rule=Host(`keycloak.${BASE_DOMAIN}`)
       - traefik.http.routers.keycloak-${COMPOSE_PROJECT_NAME}.entrypoints=websecure
       - traefik.http.routers.keycloak-${COMPOSE_PROJECT_NAME}.tls.certresolver=letsencrypt
-      - traefik.http.routers.keycloak-${COMPOSE_PROJECT_NAME}.service=keycloak-${COMPOSE_PROJECT_NAME}
-      - traefik.http.services.keycloak-${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=8080
     networks:
       - ingress
       - internal
-    ports: !override []
 
   aidbox_db:
     labels:
@@ -46,14 +42,16 @@ services:
       - internal
 
   aidbox:
+    environment:
+      BOX_WEB_BASE_URL: https://aidbox.${BASE_DOMAIN}
     labels:
       - traefik.enable=true
       - traefik.docker.network=ingress
       - traefik.http.routers.aidbox-${COMPOSE_PROJECT_NAME}.rule=Host(`aidbox.${BASE_DOMAIN}`)
       - traefik.http.routers.aidbox-${COMPOSE_PROJECT_NAME}.entrypoints=websecure
       - traefik.http.routers.aidbox-${COMPOSE_PROJECT_NAME}.tls.certresolver=letsencrypt
-      - traefik.http.routers.aidbox-${COMPOSE_PROJECT_NAME}.service=aidbox-${COMPOSE_PROJECT_NAME}
-      - traefik.http.services.aidbox-${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=8080
+    expose:
+      - 8080
     networks:
       - ingress
       - internal
@@ -74,16 +72,17 @@ services:
       - traefik.http.routers.query-connector-${COMPOSE_PROJECT_NAME}.rule=Host(`query-connector.${BASE_DOMAIN}`)
       - traefik.http.routers.query-connector-${COMPOSE_PROJECT_NAME}.entrypoints=websecure
       - traefik.http.routers.query-connector-${COMPOSE_PROJECT_NAME}.tls.certresolver=letsencrypt
-      - traefik.http.routers.query-connector-${COMPOSE_PROJECT_NAME}.service=query-connector-${COMPOSE_PROJECT_NAME}
-      - traefik.http.services.query-connector-${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=3000
+      # - traefik.http.services.query-connector-${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=3000
     environment:
       - AUTH_URL=https://query-connector.${BASE_DOMAIN}
       - LOCAL_KEYCLOAK=https://keycloak.${BASE_DOMAIN}/realms/master
       - AUTH_ISSUER=https://keycloak.${BASE_DOMAIN}/realms/master
+      - APP_HOSTNAME:https://query-connector.${BASE_DOMAIN}
+    expose:
+      - 3000
     networks:
       - ingress
       - internal
-    ports: !override []
 
 networks:
   internal:
