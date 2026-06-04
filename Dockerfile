@@ -69,8 +69,7 @@ RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
 # Ensure writable directories
-RUN mkdir -p /app /data /logs && \
-    chown -R nextjs:nodejs /app /data /logs
+RUN mkdir -p /app /data /logs
 
 # Set hostname to localhost
 ENV HOSTNAME="0.0.0.0"
@@ -87,6 +86,8 @@ COPY --from=installer --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=installer --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=installer --chown=nextjs:nodejs /app/public ./public
 COPY --from=installer --chown=nextjs:nodejs /app/start.sh ./start.sh
+
+RUN chown -R nextjs:nodejs /app /data /logs
 
 RUN mkdir -p .next/static public && \
     chown -R nextjs:nodejs .next/static public
