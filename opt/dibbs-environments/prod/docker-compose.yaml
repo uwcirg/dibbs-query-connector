@@ -1,0 +1,77 @@
+---
+services:
+  db:
+    extends:
+      file: ../base/docker-compose.yaml
+      service: db
+
+  flyway:
+    extends:
+      file: ../base/docker-compose.yaml
+      service: flyway
+    depends_on:
+      db:
+        condition: service_healthy
+
+  aidbox_db:
+    extends:
+      file: ../base/docker-compose.yaml
+      service: aidbox_db
+
+  aidbox:
+    extends:
+      file: ../base/docker-compose.yaml
+      service: aidbox
+    env_file:
+      - aidbox.env
+    depends_on:
+      - aidbox_db
+
+  aidbox-seeder:
+    extends:
+      file: ../base/docker-compose.yaml
+      service: aidbox-seeder
+    depends_on:
+      db:
+        condition: service_healthy
+      aidbox:
+        condition: service_healthy
+      flyway:
+        condition: service_completed_successfully
+
+  keycloak:
+    extends:
+      file: ../base/docker-compose.yaml
+      service: keycloak
+    env_file:
+      - keycloak.env
+    depends_on:
+      db:
+        condition: service_healthy
+
+  query-connector:
+    extends:
+      file: ../base/docker-compose.yaml
+      service: query-connector
+    image: ${QUERY_CONNECTOR_IMAGE}:${QUERY_CONNECTOR_IMAGE_TAG:-latest}
+    env_file:
+      - query-connector.env
+    volumes:
+      - ../../../keys:/app/keys
+    depends_on:
+      db:
+        condition: service_healthy
+      keycloak:
+        condition: service_started
+      aidbox-seeder:
+        condition: service_completed_successfully
+
+volumes:
+  db-data: {}
+  aidbox_pg_data: {}
+
+networks:
+  internal: {}
+  ingress:
+    external: true
+    name: external_web

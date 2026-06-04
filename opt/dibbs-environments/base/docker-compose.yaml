@@ -1,0 +1,159 @@
+---
+services:
+  db:
+    image: postgres:${POSTGRES_IMAGE_TAG:-alpine}
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: pw
+      POSTGRES_DB: tefca_db
+    volumes:
+      - db-data:/var/lib/postgresql/data
+      - ./config/db:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 2s
+      timeout: 5s
+      retries: 20
+      start_period: 2m
+    networks:
+      - internal
+
+  flyway:
+    image: flyway/flyway:${FLYWAY_IMAGE_TAG:-11-alpine}
+    environment:
+      JAVA_OPTS_APPEND: ${JAVA_TOOL_OPTIONS:--XX:UseSVE=0}
+    command: -configFiles=/flyway/conf/flyway.conf -schemas=public -connectRetries=60 migrate
+    volumes:
+      - ../../../flyway/sql:/flyway/sql:ro
+      - ../../../flyway/conf/flyway.conf:/flyway/conf/flyway.conf:ro
+    networks:
+      - internal
+
+  aidbox_db:
+    image: healthsamurai/aidboxdb:17
+    environment:
+      POSTGRES_USER: aidbox
+      POSTGRES_PORT: "5432"
+      POSTGRES_DB: aidbox
+      POSTGRES_PASSWORD: gOxAmiyiz4
+    volumes:
+      - aidbox_pg_data:/var/lib/postgresql/data:delegated
+    networks:
+      - internal
+
+  aidbox:
+    image: healthsamurai/aidboxone:${AIDBOX_IMAGE_TAG:-stable}
+    pull_policy: always
+    environment:
+      AIDBOX_TERMINOLOGY_SERVICE_BASE_URL: https://tx.fhir.org/r4
+      AIDBOX_FHIR_PACKAGES: hl7.fhir.r4.core#4.0.1
+      AIDBOX_FHIR_SCHEMA_VALIDATION: "true"
+      AIDBOX_CREATED_AT_URL: https://aidbox.app/ex/createdAt
+      AIDBOX_CLIENT_SECRET: L6AGe_5V2O
+      AIDBOX_CORRECT_AIDBOX_FORMAT: "true"
+      AIDBOX_ADMIN_PASSWORD: OC1MzJ5QNV
+      AIDBOX_COMPLIANCE: enabled
+      AIDBOX_SECURITY_AUDIT__LOG_ENABLED: "true"
+      BOX_SEARCH_FHIR__COMPARISONS: "true"
+      PGHOST: aidbox_db
+      BOX_COMPATIBILITY_VALIDATION_JSON__SCHEMA_REGEX: "#{:fhir-datetime}"
+      BOX_SEARCH_AUTHORIZE_INLINE_REQUESTS: "true"
+      PGUSER: aidbox
+      AIDBOX_PORT: 8080
+      PGDATABASE: aidbox
+      PGPASSWORD: gOxAmiyiz4
+      PGPORT: "5432"
+      BOX_SEARCH_INCLUDE_CONFORMANT: "true"
+      JAVA_TOOL_OPTIONS: ${JAVA_TOOL_OPTIONS:-}
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.aidbox-${COMPOSE_PROJECT_NAME}.rule=Host(`aidbox.${BASE_DOMAIN}`)
+      - traefik.http.routers.aidbox-${COMPOSE_PROJECT_NAME}.entrypoints=websecure
+      - traefik.http.routers.aidbox-${COMPOSE_PROJECT_NAME}.tls.certresolver=letsencrypt
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          'wget -qO- http://localhost:8080/health | grep -q ''"status":"pass"'' || exit 1',
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 60
+      start_period: 30s
+    expose:
+      - 8080
+    networks:
+      - ingress
+      - internal
+
+  aidbox-seeder:
+    build:
+      context: ../../../
+      dockerfile: Dockerfile.aidbox-seeder
+    volumes:
+      - ../../../src/app/tests/assets/GoldenSickPatient.json:/data/GoldenSickPatient.json:ro
+    environment:
+      AIDBOX_BASE_URL: http://aidbox:8080
+      APP_HOSTNAME: https://${BASE_DOMAIN}
+    networks:
+      - internal
+
+  keycloak:
+    init: true
+    image: quay.io/keycloak/keycloak:${KEYCLOAK_IMAGE_TAG:-26.6}
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.keycloak-${COMPOSE_PROJECT_NAME}.rule=Host(`keycloak.${BASE_DOMAIN}`)
+      - traefik.http.routers.keycloak-${COMPOSE_PROJECT_NAME}.entrypoints=websecure
+      - traefik.http.routers.keycloak-${COMPOSE_PROJECT_NAME}.tls.certresolver=letsencrypt
+    command:
+      - start
+      - --import-realm
+      - --proxy-headers=xforwarded
+      - --hostname=https://keycloak.${BASE_DOMAIN}
+    environment:
+      KC_DB: postgres
+      KC_DB_URL_HOST: db
+      KC_DB_URL_DATABASE: keycloak
+      KC_DB_USERNAME: postgres
+      KC_DB_PASSWORD: pw
+      KC_PROXY: edge
+      KC_HOSTNAME_STRICT: "false"
+      KC_HTTP_ENABLED: "true"
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+    volumes:
+      - ../../../keycloak/localhost.json:/opt/keycloak/data/import/master-realm.json:ro
+    expose:
+      - 8080
+    networks:
+      - ingress
+      - internal
+
+  query-connector:
+    build:
+      context: ../../../
+      dockerfile: Dockerfile
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgres://postgres:pw@db:5432/tefca_db
+      AUTH_DISABLED: "false"
+      NEXT_PUBLIC_AUTH_PROVIDER: keycloak
+      AUTH_URL: https://${BASE_DOMAIN}
+      APP_HOSTNAME: https://${BASE_DOMAIN}
+      LOCAL_KEYCLOAK: https://keycloak.${BASE_DOMAIN}/realms/master
+      NAMED_KEYCLOAK: http://keycloak:8080/realms/master
+      AUTH_ISSUER: https://keycloak.${BASE_DOMAIN}/realms/master
+      AUTH_CLIENT_ID: query-connector
+      AIDBOX_BASE_URL: https://aidbox.${BASE_DOMAIN}
+      JAVA_TOOL_OPTIONS: ${JAVA_TOOL_OPTIONS:-}
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.query-connector-${COMPOSE_PROJECT_NAME}.rule=Host(`${BASE_DOMAIN}`)
+      - traefik.http.routers.query-connector-${COMPOSE_PROJECT_NAME}.entrypoints=websecure
+      - traefik.http.routers.query-connector-${COMPOSE_PROJECT_NAME}.tls.certresolver=letsencrypt
+    expose:
+      - 3000
+    networks:
+      - ingress
+      - internal

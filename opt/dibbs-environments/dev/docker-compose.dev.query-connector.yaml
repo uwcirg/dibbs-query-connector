@@ -1,0 +1,15 @@
+# Optional development overrides: bind-mount the repo and run the Next.js dev server.
+# Enable via COMPOSE_FILE in default.env:
+#   COMPOSE_FILE=docker-compose.yaml:docker-compose.dev.query-connector.yaml
+---
+services:
+  query-connector:
+    build:
+      context: ${QUERY_CONNECTOR_CHECKOUT_DIR:-../../../}
+      dockerfile: Dockerfile.dev
+    environment:
+      NODE_ENV: development
+    volumes:
+      - ${QUERY_CONNECTOR_CHECKOUT_DIR:-../../../}:/code
+      - /code/node_modules
+      - ../../../keys:/app/keys

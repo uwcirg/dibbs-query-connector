@@ -42,6 +42,15 @@ Add your API keys as an environment variables called `ERSD_API_KEY`, `UMLS_API_K
 
 The default `DATABASE_URL` value in `.env.sample` assumes you will use the database container spun up by Docker Compose. It is also possible to run a PostgreSQL server on your local machine, which may lead to some modest speed increases, especially when seeding from the eRSD and UMLS APIs. If you'd like to run a local PostgreSQL server, adjust your `DATABASE_URL` as needed, e.g. `DATABASE_URL=postgresql://myuser@localhost:5432/tefca_db`. To run Flyway migrations against a local PostgreSQL server, you'll also need to adjust [flyway.conf](../../flyway/conf/flyway.conf) accordingly.
 
+#### Running with layered Docker Compose (Traefik)
+
+For a full stack (Query Connector, Keycloak, Aidbox, Postgres) behind HTTPS with hostnames like `https://localtest.me`, use [`opt/dibbs-environments`](../../opt/dibbs-environments/README.md):
+
+1. Start Traefik: `cd opt/dibbs-environments/extras && docker compose up --detach`
+2. Follow setup in [`opt/dibbs-environments/dev/README.md`](../../opt/dibbs-environments/dev/README.md)
+
+This path uses Traefik and `*.localtest.me` DNS instead of direct host ports.
+
 #### Running with Docker Compose and Node
 
 We provide a [Docker Compose file](../../docker-compose-dev.yaml) that spins up all of the necessary services for Query Connector, and a simple npm script for invoking both Docker Compose and running the Next.js application.
