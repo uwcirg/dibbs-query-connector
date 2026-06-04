@@ -1,0 +1,69 @@
+---
+services:
+  cpro:
+    extends:
+      file: ../base/docker-compose.yaml
+      service: cpro
+    env_file:
+      - cpro.env
+    depends_on:
+      - mysql
+  mysql:
+    extends:
+      file: ../base/docker-compose.yaml
+      service: mysql
+
+  db:
+    extends:
+      file: ../base/docker-compose.yaml
+      service: db
+
+  fhir:
+    extends:
+      file: ../base/docker-compose.yaml
+      service: fhir
+    depends_on:
+      - db
+
+  keycloak:
+    extends:
+      file: ../base/docker-compose.yaml
+      service: keycloak
+    env_file:
+      - keycloak.env
+    depends_on:
+      - db
+
+  fhir-auth:
+    extends:
+      file: ../base/docker-compose.yaml
+      service: fhir-auth
+    depends_on:
+      - fhir
+
+  shl-creator:
+    extends:
+      file: ../base/docker-compose.yaml
+      service: shl-creator
+    env_file:
+      shl-creator.env
+
+  shl-server:
+    extends:
+      file: ../base/docker-compose.yaml
+      service: shl-server
+
+volumes:
+  mysql-data: {}
+  secure-data: {}
+  db-data: {}
+  tmp-data: {}
+  shl-server-data: {}
+networks:
+  # internal network for backing services
+  internal:
+
+  # ingress network
+  ingress:
+    external: true
+    name: external_web
