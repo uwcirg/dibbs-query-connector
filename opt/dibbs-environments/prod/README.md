@@ -10,7 +10,7 @@ Deploys published images behind Traefik. Intended for staging or production host
    cd ../extras && docker compose up --detach
    ```
 
-2. DNS records for `${BASE_DOMAIN}`, `keycloak.${BASE_DOMAIN}`, and `aidbox.${BASE_DOMAIN}` pointing at the host.
+2. DNS records for `query-connector.${BASE_DOMAIN}`, `keycloak.${BASE_DOMAIN}`, and `aidbox.${BASE_DOMAIN}` pointing at the host.
 
 3. TLS: Traefik obtains certificates via Let's Encrypt (HTTP challenge on port 80).
 
@@ -36,6 +36,6 @@ docker compose pull && docker compose up --detach
 
 | Service | URL |
 |---------|-----|
-| Query Connector | `https://${BASE_DOMAIN}` |
+| Query Connector | `https://query-connector.${BASE_DOMAIN}` |
 | Keycloak | `https://keycloak.${BASE_DOMAIN}` |
 | Aidbox | `https://aidbox.${BASE_DOMAIN}` |

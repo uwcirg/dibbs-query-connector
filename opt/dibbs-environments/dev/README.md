@@ -48,7 +48,7 @@ docker compose up --detach
 
 | Service | URL |
 |---------|-----|
-| Query Connector | `https://localtest.me` |
+| Query Connector | `https://query-connector.localtest.me` |
 | Keycloak | `https://keycloak.localtest.me` |
 | Aidbox | `https://aidbox.localtest.me` |
 | Traefik dashboard | `http://localhost:8080` |

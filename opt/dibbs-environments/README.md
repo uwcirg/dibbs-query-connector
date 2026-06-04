@@ -45,7 +45,7 @@ Layered Docker Compose configuration for running the full DIBBS stack locally or
    docker compose pull && docker compose up --detach
    ```
 
-3. Open the app at `https://localtest.me` (or your `BASE_DOMAIN`).
+3. Open the app at `https://query-connector.localtest.me` (or `https://query-connector.${BASE_DOMAIN}`).
 
 See [`dev/README.md`](./dev/README.md) or [`prod/README.md`](./prod/README.md) for details.
 

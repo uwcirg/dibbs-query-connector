@@ -95,7 +95,7 @@ services:
       - ../../../src/app/tests/assets/GoldenSickPatient.json:/data/GoldenSickPatient.json:ro
     environment:
       AIDBOX_BASE_URL: http://aidbox:8080
-      APP_HOSTNAME: https://${BASE_DOMAIN}
+      APP_HOSTNAME: https://query-connector.${BASE_DOMAIN}
     networks:
       - internal
 
@@ -140,8 +140,8 @@ services:
       DATABASE_URL: postgres://postgres:pw@db:5432/tefca_db
       AUTH_DISABLED: "false"
       NEXT_PUBLIC_AUTH_PROVIDER: keycloak
-      AUTH_URL: https://${BASE_DOMAIN}
-      APP_HOSTNAME: https://${BASE_DOMAIN}
+      AUTH_URL: https://query-connector.${BASE_DOMAIN}
+      APP_HOSTNAME: https://query-connector.${BASE_DOMAIN}
       LOCAL_KEYCLOAK: https://keycloak.${BASE_DOMAIN}/realms/master
       NAMED_KEYCLOAK: http://keycloak:8080/realms/master
       AUTH_ISSUER: https://keycloak.${BASE_DOMAIN}/realms/master
@@ -150,7 +150,7 @@ services:
       JAVA_TOOL_OPTIONS: ${JAVA_TOOL_OPTIONS:-}
     labels:
       - traefik.enable=true
-      - traefik.http.routers.query-connector-${COMPOSE_PROJECT_NAME}.rule=Host(`${BASE_DOMAIN}`)
+      - traefik.http.routers.query-connector-${COMPOSE_PROJECT_NAME}.rule=Host(`query-connector.${BASE_DOMAIN}`)
       - traefik.http.routers.query-connector-${COMPOSE_PROJECT_NAME}.entrypoints=websecure
       - traefik.http.routers.query-connector-${COMPOSE_PROJECT_NAME}.tls.certresolver=letsencrypt
     expose:
