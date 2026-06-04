@@ -63,7 +63,7 @@ services:
 
   aidbox-seeder:
     labels:
-    - traefik.enable=false
+      - traefik.enable=false
     environment:
       - APP_HOSTNAME=https://query-connector.${BASE_DOMAIN}
     networks:
