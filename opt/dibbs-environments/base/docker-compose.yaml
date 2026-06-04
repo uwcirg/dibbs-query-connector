@@ -1,13 +1,14 @@
 ---
 services:
   db:
-    image: postgres:${POSTGRES_IMAGE_TAG:-alpine}
+    # Pin major version: postgres:alpine tracks PG 18+ with a different data-dir layout.
+    image: postgres:${POSTGRES_IMAGE_TAG:-16-alpine}
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: pw
       POSTGRES_DB: tefca_db
     volumes:
-      - db-data:/var/lib/postgresql/data
+      - db-data:/var/lib/postgresql
       - ./config/db:/docker-entrypoint-initdb.d:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]

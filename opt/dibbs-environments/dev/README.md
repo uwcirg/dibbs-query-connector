@@ -35,6 +35,14 @@ Edit `.env`, `query-connector.env`, and `aidbox.env` (set API keys and `AIDBOX_L
 docker compose pull && docker compose up --detach
 ```
 
+If `db` fails with a PostgreSQL 18+ data-directory error after a previous attempt, remove the stale volume and retry (replace the project name if yours differs):
+
+```bash
+docker compose down
+docker volume rm dibbs-env-dev-ivanc_db-data
+docker compose up --detach
+```
+
 ## URLs
 
 | Service | URL |
