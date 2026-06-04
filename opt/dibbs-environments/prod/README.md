@@ -21,6 +21,7 @@ for file in *.default; do
   cp "$file" "${file%%.default}"
 done
 cp default.env .env
+chmod 777 ../keys
 ```
 
 Set `BASE_DOMAIN`, `COMPOSE_PROJECT_NAME`, secrets in `query-connector.env`, `keycloak.env`, and `aidbox.env`.

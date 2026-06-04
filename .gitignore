@@ -103,5 +103,5 @@ certificates
 /playwright/.cache/
 /coverage
 .tool-versions
-keys/
+/keys/
 *.tsbuildinfo

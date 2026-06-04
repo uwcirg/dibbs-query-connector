@@ -23,6 +23,7 @@ for file in *.default; do
   cp "$file" "${file%%.default}"
 done
 cp default.env .env
+chmod 777 ../keys
 ```
 
 Edit `.env`, `query-connector.env`, and `aidbox.env` (set API keys and `AIDBOX_LICENSE`).
@@ -55,6 +56,8 @@ docker compose up --detach
 Keycloak admin: `admin` / `admin` (defaults in base compose).
 
 App login (dev realm): user `qc-admin`, password `QcDev2024!`
+
+JWKS signing keys are written to [`../keys`](../keys/) (bind-mounted at `/app/keys`). Run `chmod 777 ../keys` during setup so the container user can write key files.
 
 ## Optional: hot-reload in container
 

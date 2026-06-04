@@ -12,4 +12,4 @@ services:
     volumes:
       - ${QUERY_CONNECTOR_CHECKOUT_DIR:-../../../}:/code
       - /code/node_modules
-      - ../../../keys:/app/keys
+      - ../keys:/code/keys

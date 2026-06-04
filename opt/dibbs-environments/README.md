@@ -40,6 +40,7 @@ Layered Docker Compose configuration for running the full DIBBS stack locally or
    cd ../dev
    for file in *.default; do cp "$file" "${file%%.default}"; done
    cp default.env .env
+   chmod 777 ../keys
    # Edit .env, query-connector.env, aidbox.env — set secrets and API keys
    docker compose pull && docker compose up --detach
    ```
