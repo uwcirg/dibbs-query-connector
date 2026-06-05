@@ -24,7 +24,9 @@ cp default.env .env
 chmod 777 ../keys
 ```
 
-Set `BASE_DOMAIN`, `COMPOSE_PROJECT_NAME`, secrets in `query-connector.env`, `keycloak.env`, and `aidbox.env`.
+Set `BASE_DOMAIN`, `COMPOSE_PROJECT_NAME`, and secrets in `query-connector.env`, `keycloak.env`, and `aidbox.env`.
+
+`AUTH_CLIENT_SECRET` in `query-connector.env` must match `KEYCLOAK_QUERY_CONNECTOR_CLIENT_SECRET` in `keycloak.env`. Query Connector client URLs are derived from `BASE_DOMAIN` at realm import (see [`base/config/keycloak/import/master-realm.json`](../base/config/keycloak/import/master-realm.json)).
 
 ## Deploy
 

@@ -26,9 +26,11 @@ cp default.env .env
 chmod 777 ../keys
 ```
 
-Edit `.env`, `query-connector.env`, and `aidbox.env` (set API keys and `AIDBOX_LICENSE`).
+Edit `.env`, `query-connector.env`, `keycloak.env`, and `aidbox.env` (set API keys and `AIDBOX_LICENSE`).
 
-`AUTH_CLIENT_SECRET` in `query-connector.env` must match the `query-connector` client secret in [`keycloak/localhost.json`](../../../keycloak/localhost.json) (default from `.env.sample`).
+`AUTH_CLIENT_SECRET` in `query-connector.env` must match `KEYCLOAK_QUERY_CONNECTOR_CLIENT_SECRET` in `keycloak.env` (defaults from `.env.sample`).
+
+Query Connector OIDC URLs in Keycloak are set from `BASE_DOMAIN` via [`base/config/keycloak/import/master-realm.json`](../base/config/keycloak/import/master-realm.json) placeholders at import time.
 
 ## Deploy
 

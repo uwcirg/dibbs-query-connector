@@ -123,8 +123,13 @@ services:
       KC_HTTP_ENABLED: "true"
       KEYCLOAK_ADMIN: admin
       KEYCLOAK_ADMIN_PASSWORD: admin
+      KEYCLOAK_QUERY_CONNECTOR_BASE_URL: https://query-connector.${BASE_DOMAIN}
+      KEYCLOAK_QUERY_CONNECTOR_REDIRECT_URI: https://query-connector.${BASE_DOMAIN}/api/auth/callback/keycloak
+      KEYCLOAK_QUERY_CONNECTOR_WEB_ORIGIN: https://query-connector.${BASE_DOMAIN}
+      authBaseUrl: https://keycloak.${BASE_DOMAIN}
+      authAdminUrl: https://keycloak.${BASE_DOMAIN}
     volumes:
-      - ../../../keycloak/localhost.json:/opt/keycloak/data/import/master-realm.json:ro
+      - ./config/keycloak/import/:/opt/keycloak/data/import:ro
     expose:
       - 8080
     networks:
