@@ -13,7 +13,7 @@ import { useSearchParams } from "next/navigation";
 import {
   stateOptions,
   Mode,
-  hyperUnluckyPatient,
+  DEMO_PATIENTS,
   AddressData,
   INSUFFICIENT_PATIENT_IDENTIFIERS,
 } from "@/app/constants";
@@ -54,6 +54,7 @@ const SearchForm: React.FC<SearchFormProps> = function SearchForm({
   setUncertainMatchError,
 }) {
   //Set the patient options based on the demoOption
+  const [demoPatientName, setDemoPatientName] = useState<string>("");
   const [firstName, setFirstName] = useState<string>("");
   const [lastName, setLastName] = useState<string>("");
   const [phone, setPhone] = useState<string>("");
@@ -67,6 +68,12 @@ const SearchForm: React.FC<SearchFormProps> = function SearchForm({
     state: "",
     zip: "",
   });
+
+  useEffect(() => {
+    const patients = DEMO_PATIENTS[fhirServer];
+    if (!patients) return;
+    setDemoPatientName(Object.keys(patients)[0]);
+  }, [fhirServer]);
 
   const [fhirServerConfig, setFhirServerConfig] =
     useState<FhirServerConfig | null>(null);
@@ -126,14 +133,18 @@ const SearchForm: React.FC<SearchFormProps> = function SearchForm({
   const [_formError, setFormError] = useState(false);
 
   const fillFields = useCallback(() => {
-    setFirstName(hyperUnluckyPatient.FirstName);
-    setLastName(hyperUnluckyPatient.LastName);
-    setDOB(hyperUnluckyPatient.DOB);
-    setMRN(hyperUnluckyPatient.MRN);
-    setPhone(hyperUnluckyPatient.Phone);
-    setAddress({ ...hyperUnluckyPatient.Address });
-    setEmail(hyperUnluckyPatient.Email);
-  }, [fhirServers]);
+    const demoPatient = DEMO_PATIENTS[fhirServer][demoPatientName];
+    if (!demoPatient) {
+      return;
+    }
+    setFirstName(demoPatient.FirstName);
+    setLastName(demoPatient.LastName);
+    setDOB(demoPatient.DOB);
+    setMRN(demoPatient.MRN);
+    setPhone(demoPatient.Phone);
+    setAddress({ ...demoPatient.Address });
+    setEmail(demoPatient.Email);
+  }, [fhirServer, demoPatientName]);
 
   const nameRegex = "^[A-Za-z0-9\u00C0-\u024F\u1E00-\u1EFF\\-'. ]+$";
   const nameRuleHint =
@@ -245,6 +256,10 @@ const SearchForm: React.FC<SearchFormProps> = function SearchForm({
     }
   }
 
+  function getFhirServer() {
+    return params?.get("server") || fhirServer;
+  };
+
   useEffect(() => {
     window.scrollTo(0, 0);
     prefillFromQueryParams();
@@ -268,28 +283,62 @@ const SearchForm: React.FC<SearchFormProps> = function SearchForm({
               queries that you can make with the Query Connector. To proceed,
               click “fill fields” below.
             </Label>
-
-            <div className={`${styles.searchCallToActionContainer}`}>
-              <Button
-                secondary
-                type="button"
-                onClick={() => {
-                  fillFields();
-                }}
-              >
-                Fill fields
-              </Button>
-              <Button
-                unstyled
-                className={`margin-left-auto`}
-                type="button"
-                onClick={() => {
-                  setShowAdvanced(!showAdvanced);
-                }}
-              >
-                Advanced
-              </Button>
-            </div>
+              <div className={`${styles.searchCallToActionContainer}`}>
+                {!showAdvanced && (
+                  <Button
+                    secondary
+                    type="button"
+                    onClick={() => {
+                      fillFields();
+                    }}
+                  >
+                    Fill fields
+                  </Button>
+                )}
+                {showAdvanced && (
+                  <div>
+                    <Label
+                      htmlFor="test_patient"
+                      className="margin-top-0-important width-full"
+                    >
+                      Select Test Patient
+                    </Label>
+                    <Select
+                      id="test_patient"
+                      name="test_patient"
+                      value={demoPatientName}
+                      onChange={(event) => {
+                        setDemoPatientName(event.target.value as string);
+                      }}
+                    >
+                      {Object.keys(DEMO_PATIENTS[getFhirServer()]).map((name) => (
+                        <option key={name} value={name}>
+                          {name}
+                        </option>
+                      ))}
+                    </Select>
+                    <Button
+                      secondary
+                      type="button"
+                      onClick={() => {
+                        fillFields();
+                      }}
+                    >
+                      Fill fields
+                    </Button>
+                  </div>
+                )}
+                <Button
+                  unstyled
+                  className={`margin-left-auto`}
+                  type="button"
+                  onClick={() => {
+                    setShowAdvanced(!showAdvanced);
+                  }}
+                >
+                  Advanced
+                </Button>
+              </div>
           </div>
         }
         <Fieldset className={`${styles.searchFormContainer} bg-white`}>
