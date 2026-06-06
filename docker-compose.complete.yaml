@@ -24,8 +24,6 @@ services:
     extends:
       file: docker-compose-e2e.yaml
       service: query-connector
-
-    image: ghcr.io/cdcgov/dibbs-query-connector/query-connector:latest
     env_file: !override
       - .env
     environment:
