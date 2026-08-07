@@ -311,13 +311,20 @@ const SearchForm: React.FC<SearchFormProps> = function SearchForm({
                         setDemoPatientName(event.target.value as string);
                       }}
                     >
-                      {Object.keys(DEMO_PATIENTS[getFhirServer()]).map((name) => (
-                        <option key={name} value={name}>
-                          {name}
-                        </option>
-                      ))}
+                      {DEMO_PATIENTS[getFhirServer()] && (
+                        Object.keys(DEMO_PATIENTS[getFhirServer()]).map((name) => (
+                          <option key={name} value={name}>
+                            {name}
+                          </option>
+                        ))
+                      )}
+                      {DEMO_PATIENTS[getFhirServer()] === undefined && (
+                        <option value="" disabled>No patients available for {getFhirServer()}</option>
+                      )}
                     </Select>
+                    <br>
                     <Button
+                      disabled = {DEMO_PATIENTS[getFhirServer()] === undefined}
                       secondary
                       type="button"
                       onClick={() => {
