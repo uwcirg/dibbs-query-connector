@@ -6,7 +6,13 @@ services:
     volumes:
       - ./vs_dump.sql:/docker-entrypoint-initdb.d/vs_dump.sql
       - db-data:/var/lib/postgresql
-
+  aidbox_db:
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aidbox"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+  
   aidbox:
     healthcheck:
       test:
@@ -18,11 +24,17 @@ services:
       timeout: 5s
       retries: 60
       start_period: 30s
+    depends_on:
+      aidbox_db:
+        condition: service_healthy
 
   aidbox-seeder:
     environment:
       - AIDBOX_BASE_URL=http://aidbox:8080
       - APP_HOSTNAME=http://query-connector:3000
+    volumes:
+      - ./src/app/tests/assets:/data
+      - ./logs:/var/log
     depends_on:
       db:
         condition: service_healthy

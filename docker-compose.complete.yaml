@@ -19,7 +19,7 @@ include:
       - docker-compose-dev.yaml
       - docker-compose.complete.overrides.yaml
 
-services:
+services:  
   query-connector:
     extends:
       file: docker-compose-e2e.yaml

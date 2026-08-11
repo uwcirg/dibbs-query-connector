@@ -26,6 +26,9 @@ services:
       KC_PROXY_HEADERS: xforwarded
       KC_HOSTNAME: keycloak.${BASE_DOMAIN}
       KC_HOSTNAME_STRICT: "false"
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      KEYCLOAK_QUERY_CONNECTOR_BASE: https://query-connector.${BASE_DOMAIN}
     labels:
       - traefik.enable=true
       - traefik.http.routers.keycloak-${COMPOSE_PROJECT_NAME}.rule=Host(`keycloak.${BASE_DOMAIN}`)
@@ -44,9 +47,10 @@ services:
   aidbox:
     environment:
       BOX_WEB_BASE_URL: https://aidbox.${BASE_DOMAIN}
+      AIDBOX_BASE_URL: https://aidbox.${BASE_DOMAIN}
+      APP_HOSTNAME: https://query-connector.${BASE_DOMAIN}
     labels:
       - traefik.enable=true
-      - traefik.docker.network=ingress
       - traefik.http.routers.aidbox-${COMPOSE_PROJECT_NAME}.rule=Host(`aidbox.${BASE_DOMAIN}`)
       - traefik.http.routers.aidbox-${COMPOSE_PROJECT_NAME}.entrypoints=websecure
       - traefik.http.routers.aidbox-${COMPOSE_PROJECT_NAME}.tls.certresolver=letsencrypt
@@ -68,7 +72,6 @@ services:
   query-connector:
     labels:
       - traefik.enable=true
-      - traefik.docker.network=ingress
       - traefik.http.routers.query-connector-${COMPOSE_PROJECT_NAME}.rule=Host(`query-connector.${BASE_DOMAIN}`)
       - traefik.http.routers.query-connector-${COMPOSE_PROJECT_NAME}.entrypoints=websecure
       - traefik.http.routers.query-connector-${COMPOSE_PROJECT_NAME}.tls.certresolver=letsencrypt
@@ -76,8 +79,9 @@ services:
     environment:
       - AUTH_URL=https://query-connector.${BASE_DOMAIN}
       - LOCAL_KEYCLOAK=https://keycloak.${BASE_DOMAIN}/realms/master
+      - NAMED_KEYCLOAK=https://keycloak.${BASE_DOMAIN}/realms/master
       - AUTH_ISSUER=https://keycloak.${BASE_DOMAIN}/realms/master
-      - APP_HOSTNAME:https://query-connector.${BASE_DOMAIN}
+      - APP_HOSTNAME=https://query-connector.${BASE_DOMAIN}
     expose:
       - 3000
     networks:

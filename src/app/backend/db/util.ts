@@ -41,6 +41,38 @@ export function translateSnakeStringToCamelCase(str: string) {
  * @param seen - Weekset to protect against circular references
  * @returns An object whose keys are camel cased
  */
+export function translateObjectKeysIntoCamelCase(
+  obj: object,
+  seen: WeakSet<object> = new WeakSet(),
+): object {
+  if (obj === null || typeof obj !== "object") {
+    return obj;
+  }
+
+  // Handle object arrays
+  if (Array.isArray(obj)) {
+    return obj.map((item) =>
+      typeof item === "object" && item !== null
+        ? translateObjectKeysIntoCamelCase(item, seen)
+        : item,
+    );
+  }
+
+  const formatedObj: Record<string, unknown> = {};
+  Object.entries(obj).forEach(([k, v]) => {
+    formatedObj[translateSnakeStringToCamelCase(k)] = v;
+  });
+
+  return formatedObj;
+}
+
+/**
+ * Utility function that camel cases the keys of objects, handling nested objects
+ * as well
+ * @param obj - the object to format
+ * @param seen - Weekset to protect against circular references
+ * @returns An object whose keys are camel cased
+ */
 export function translateNestedObjectKeysIntoCamelCase(
   obj: object,
   seen: WeakSet<object> = new WeakSet(),

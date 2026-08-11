@@ -80,6 +80,53 @@ export const hyperUnluckyPatient: DemoDataFields = {
   Email: "hyper.unlucky@email.com",
 };
 
+export const testBabyPatient: DemoDataFields = {
+  Id: "357052",
+  FirstName: "Baby",
+  LastName: "Test",
+  DOB: "2026-01-04",
+  MRN: "ABCMRN123",
+  Phone: "",
+  Address: {
+    street1: "850 Marina Bay Parkway",
+    street2: "APT 125",
+    city: "Forest Grove",
+    state: "OR",
+    zip: "97116"
+  },
+  Email: "",
+};
+
+export const trevm00Patient: DemoDataFields = {
+  Id: "eewfFmh5oZWT5A8Bwg3.dsA3",
+  FirstName: "Trevor",
+  LastName: "zztest",
+  DOB: "2000-12-18",
+  MRN: "",
+  Phone: "",
+  Address: {
+    street1: "",
+    street2: "",
+    city: "",
+    state: "",
+    zip: "",
+  },
+  Email: "trevm00@uw.edu",
+};
+
+export const DEMO_PATIENTS: Record<string, Record<string, DemoDataFields>> = {
+  'Aidbox': {
+    [`${hyperUnluckyPatient.FirstName} A. ${hyperUnluckyPatient.LastName}`]: hyperUnluckyPatient,
+    [`${testBabyPatient.FirstName} ${testBabyPatient.LastName}`]: testBabyPatient
+  },
+  'UWMC Test': {
+    [`${trevm00Patient.FirstName} ${trevm00Patient.LastName}`]: trevm00Patient,
+  },
+  'UWMC SMART': {
+    [`${trevm00Patient.FirstName} ${trevm00Patient.LastName}`]: trevm00Patient,
+  }
+};
+
 /*Labels and values for the state options dropdown on the query page*/
 export const stateOptions = [
   { value: "AL", label: "AL - Alabama" },
