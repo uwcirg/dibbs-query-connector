@@ -169,11 +169,13 @@ Users with super admin privileges can configure connections to the servers the Q
 2. In the dialog box, add the server name, its URL, and the authentication method you’d like to use. You can also choose to disable certificate validation, although this isn’t recommended if you’re working with servers that contain real patient data.
 3. Click the `Add server` button to add the server to your library.
 
-Query Connector currently supports the following three authentication methods:
+Query Connector currently supports the following five authentication methods:
 
 1. Provide a valid Auth Bearer token that Query Connector sends along with our FHIR requests
-2. Standard client\_credentials OAuth flow where you provide a client ID and client secret
-3. SMART on FHIR with asymmetric key exchange
+2. Provide a valid base64-encoded credential for Basic (username-password) auth, that Query Connector sends along with our FHIR Requests
+3. Standard client\_credentials OAuth flow where you provide a client ID and client secret
+4. SMART on FHIR with asymmetric key exchange
+5. Mutual TLS client certificate flow, using existing configured certificate/keys or a provided CA certificate if the server is untrusted
 
 **Note**: The authentication method available to you is determined by the server you’re using.
 
