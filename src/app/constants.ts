@@ -97,10 +97,33 @@ export const testBabyPatient: DemoDataFields = {
   Email: "",
 };
 
+export const trevm00Patient: DemoDataFields = {
+  Id: "eewfFmh5oZWT5A8Bwg3.dsA3",
+  FirstName: "Trevor",
+  LastName: "zztest",
+  DOB: "2000-12-18",
+  MRN: "",
+  Phone: "",
+  Address: {
+    street1: "",
+    street2: "",
+    city: "",
+    state: "",
+    zip: "",
+  },
+  Email: "trevm00@uw.edu",
+};
+
 export const DEMO_PATIENTS: Record<string, Record<string, DemoDataFields>> = {
   'Aidbox': {
     [`${hyperUnluckyPatient.FirstName} A. ${hyperUnluckyPatient.LastName}`]: hyperUnluckyPatient,
     [`${testBabyPatient.FirstName} ${testBabyPatient.LastName}`]: testBabyPatient
+  },
+  'UWMC Test': {
+    [`${trevm00Patient.FirstName} ${trevm00Patient.LastName}`]: trevm00Patient,
+  },
+  'UWMC SMART': {
+    [`${trevm00Patient.FirstName} ${trevm00Patient.LastName}`]: trevm00Patient,
   }
 };
 
