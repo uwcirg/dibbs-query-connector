@@ -120,6 +120,12 @@ class FHIRClient {
         // Preserve existing headers while adding Authorization
         testConfig.headers = {
           ...testConfig.headers,
+          Authorization: `Basic ${authData.bearerToken}`,
+        };
+      } else if (authData.authType === "bearer" && authData.bearerToken) {
+        // Preserve existing headers while adding Authorization
+        testConfig.headers = {
+          ...testConfig.headers,
           Authorization: `Bearer ${authData.bearerToken}`,
         };
       } else if (["client_credentials", "SMART"].includes(authData.authType)) {
@@ -309,10 +315,10 @@ class FHIRClient {
         );
         formData.append("client_assertion", jwt);
       } else if (
-        this.serverConfig.authType === "client_credentials" &&
-        this.serverConfig.clientSecret
-      ) {
-        formData.append("client_secret", this.serverConfig.clientSecret);
+          this.serverConfig.authType === "client_credentials" &&
+          this.serverConfig.clientSecret
+        ) {
+          formData.append("client_secret", this.serverConfig.clientSecret);
       }
 
       // Prepare the request options
@@ -393,6 +399,7 @@ class FHIRClient {
               | "SMART"
               | "client_credentials"
               | "basic"
+              | "bearer"
               | "none",
             clientId: this.serverConfig.clientId,
             clientSecret: this.serverConfig.clientSecret,
@@ -588,10 +595,15 @@ class FHIRClient {
       if (authData) {
         testConfig.authType = authData.authType;
 
-        if (authData.authType === "basic" && authData.bearerToken) {
+        if (authData.authType === "bearer" && authData.bearerToken) {
           testConfig.headers = {
             ...testConfig.headers,
             Authorization: `Bearer ${authData.bearerToken}`,
+          };
+        } else if (authData.authType === "basic" && authData.bearerToken) {
+          testConfig.headers = {
+            ...testConfig.headers,
+            Authorization: `Basic ${authData.bearerToken}`,
           };
         } else if (
           ["client_credentials", "SMART"].includes(authData.authType)

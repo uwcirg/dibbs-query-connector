@@ -222,9 +222,11 @@ describe("FhirServersModal", () => {
             ? "none"
             : authMethod === "Basic"
               ? "basic"
-              : authMethod === "Client credentials"
-                ? "client_credentials"
-                : "SMART";
+              : authMethod === "Bearer"
+                ? "bearer"
+                : authMethod === "Client credentials"
+                  ? "client_credentials"
+                  : "SMART";
         await user.selectOptions(authMethodSelect, optionValue);
 
         expect(screen.queryByTestId("ca-cert")).not.toBeInTheDocument();

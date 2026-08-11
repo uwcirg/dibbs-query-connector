@@ -122,6 +122,7 @@ function formUpdateReducer(server: FhirServerConfig, action: UpdateFormAction) {
         caCert: action.caCert ?? server.caCert,
       };
     }
+    case "bearer":
     case "basic": {
       return {
         ...server,
@@ -308,7 +309,7 @@ export const FhirServersModal: React.FC<FhirServersModal> = ({
       const authData = getAuthData();
 
       // Add auth-method specific properties
-      if (server.authType === "basic") {
+      if (server.authType === "basic" || server.authType === "bearer") {
         authData.bearerToken = server.accessToken;
       } else if (server.authType === "client_credentials") {
         authData.clientId = server.clientId;
@@ -360,6 +361,7 @@ export const FhirServersModal: React.FC<FhirServersModal> = ({
     if (urlNameInvalid || serverNameInvalid) return true;
 
     switch (server.authType) {
+      case "bearer":
       case "basic":
         const bearerTokenInvalid = server.accessToken === "";
         setFormError((prev) => {
@@ -626,7 +628,7 @@ export const FhirServersModal: React.FC<FhirServersModal> = ({
   // Helper to render auth method specific fields
   const renderAuthMethodFields = () => {
     switch (server.authType) {
-      case "basic":
+      case "bearer":
         return (
           <>
             <Label htmlFor="bearer-token">
@@ -643,7 +645,7 @@ export const FhirServersModal: React.FC<FhirServersModal> = ({
               value={server.accessToken ?? ""}
               onChange={(e) =>
                 serverDispatch({
-                  type: "basic",
+                  type: "bearer",
                   accessToken: e.target.value,
                 })
               }
@@ -656,11 +658,46 @@ export const FhirServersModal: React.FC<FhirServersModal> = ({
                   aria-label="warning icon indicating an error is present"
                   className={"error-message"}
                 />
-                Bearer token needs to be set for basic auth
+                Bearer token needs to be set for bearer auth
               </div>
             )}
           </>
         );
+      case "basic":
+        return (
+          <>
+            <Label htmlFor="basic-auth">
+              Base64-Encoded Credential <span className="text-secondary">(required)</span>
+            </Label>
+            <TextInput
+              id="basic-auth"
+              name="basic-auth"
+              type="text"
+              className={classNames(
+                "margin-top-05",
+                formError?.basicAuth ? "error-input" : "",
+              )}
+              value={server.accessToken ?? ""}
+              onChange={(e) =>
+                serverDispatch({
+                  type: "basic",
+                  accessToken: e.target.value,
+                })
+              }
+              required
+            />
+          
+            {formError?.basicAuth && (
+              <div className={"error-message margin-top-05"}>
+                <Icon.Error
+                  aria-label="warning icon indicating an error is present"
+                  className={"error-message"}
+                />
+                Encoded credential value needs to be set for basic auth
+              </div>
+            )}
+          </>
+        )
       case "mutual-tls":
         return (
           <>
@@ -1149,7 +1186,8 @@ export const FhirServersModal: React.FC<FhirServersModal> = ({
         }}
       >
         <option value="none">None</option>
-        <option value="basic">Basic auth (bearer token)</option>
+        <option value="basic">Basic auth</option>
+        <option value="bearer">Bearer token</option>
         <option value="client_credentials">Client Credentials</option>
         <option value="SMART">SMART on FHIR</option>
         <option value="mutual-tls">Mutual TLS</option>
