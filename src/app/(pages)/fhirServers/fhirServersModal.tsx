@@ -240,15 +240,25 @@ export const FhirServersModal: React.FC<FhirServersModal> = ({
   useEffect(() => {
     if (modalMode === "edit" && serverToEdit) {
       setConnectionStatus("idle");
+
+      // Older servers may have their bearer/basic auth token stored only in
+      // the Authorization header rather than a dedicated accessToken field.
+      const resolvedServerToEdit: FhirServerConfig = {
+        ...serverToEdit,
+        accessToken:
+          serverToEdit.accessToken ??
+          serverToEdit.headers?.Authorization?.split(" ")[1],
+      };
+
       handlePatientMatchChange(
-        serverToEdit.hostname,
-        serverToEdit.disableCertValidation,
-        getAuthData(),
+        resolvedServerToEdit.hostname,
+        resolvedServerToEdit.disableCertValidation,
+        buildAuthData(resolvedServerToEdit, resolvedServerToEdit.headers ?? {}),
       );
 
       serverDispatch({
         type: "load",
-        initialPayload: serverToEdit,
+        initialPayload: resolvedServerToEdit,
       });
 
       // Set headers
@@ -1050,31 +1060,40 @@ export const FhirServersModal: React.FC<FhirServersModal> = ({
     modalRef.current?.toggleModal();
   };
 
-  const getAuthData = (): AuthData => ({
-    authType: server.authType ?? "none",
-    headers: convertHeadersToObject(),
-    bearerToken: server.authType === "basic" ? server.accessToken : undefined,
+  const buildAuthData = (
+    source: FhirServerConfig,
+    headers: Record<string, string>,
+  ): AuthData => ({
+    authType: source.authType ?? "none",
+    headers,
+    bearerToken:
+      source.authType === "basic" || source.authType === "bearer"
+        ? source.accessToken
+        : undefined,
     clientId:
-      server.authType &&
-      ["client_credentials", "SMART"].includes(server.authType)
-        ? server?.clientId
+      source.authType &&
+      ["client_credentials", "SMART"].includes(source.authType)
+        ? source?.clientId
         : undefined,
     clientSecret:
-      server.authType === "client_credentials"
-        ? server?.clientSecret
+      source.authType === "client_credentials"
+        ? source?.clientSecret
         : undefined,
     tokenEndpoint:
-      server.authType &&
-      ["client_credentials", "SMART"].includes(server.authType)
-        ? server?.tokenEndpoint
+      source.authType &&
+      ["client_credentials", "SMART"].includes(source.authType)
+        ? source?.tokenEndpoint
         : undefined,
     scopes:
-      server.authType &&
-      ["client_credentials", "SMART"].includes(server.authType)
-        ? server?.scopes
+      source.authType &&
+      ["client_credentials", "SMART"].includes(source.authType)
+        ? source?.scopes
         : undefined,
-    caCert: server.authType === "mutual-tls" ? server?.caCert : undefined,
+    caCert: source.authType === "mutual-tls" ? source?.caCert : undefined,
   });
+
+  const getAuthData = (): AuthData =>
+    buildAuthData(server, convertHeadersToObject());
 
   const resetModalState = () => {
     serverDispatch({
