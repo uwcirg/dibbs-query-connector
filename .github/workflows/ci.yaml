@@ -50,9 +50,6 @@ jobs:
       - name: Run tests
         id: run_unit_and_integration_tests
         run: |
-          sudo mkdir keys
-          sudo chmod -R 755 keys
-          sudo chown -R $USER:$USER keys
           npm run test:ci
         # uncomment these next few lines and the corresponding log import
         # in the setup script you're trying to debug if you're having trouble
