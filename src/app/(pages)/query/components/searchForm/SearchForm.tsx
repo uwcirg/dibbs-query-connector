@@ -322,7 +322,7 @@ const SearchForm: React.FC<SearchFormProps> = function SearchForm({
                         <option value="" disabled>No patients available for {getFhirServer()}</option>
                       )}
                     </Select>
-                    <br>
+                    <br/>
                     <Button
                       disabled = {DEMO_PATIENTS[getFhirServer()] === undefined}
                       secondary
