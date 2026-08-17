@@ -41,7 +41,7 @@ const ServiceRequestTable: React.FC<ServiceRequestTableProps> = ({
       </thead>
       <tbody>
         {serviceRequests.map((obs) => (
-          <tr key={obs.id}>
+          <tr key={obs.id} id={obs.id}>
             <td>{formatDate(obs?.authoredOn)}</td>
             <td>{formatCodeableConcept(obs.code)}</td>
             <td>{formatCodeableConcept(obs.requester)}</td>
