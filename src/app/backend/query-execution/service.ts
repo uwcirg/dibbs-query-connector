@@ -102,7 +102,7 @@ class QueryService {
       }
 
       if (phonePossibilities.length > 0) {
-        patientQuery += `phone=${phonePossibilities.join(",")}&`;
+        patientQuery += `telecom=${phonePossibilities.map(p => `${p}` ).join(",")}&`;
       }
     }
 
@@ -137,7 +137,7 @@ class QueryService {
     if (email) {
       const emailsToSearch = email.split(";");
       if (emailsToSearch.length > 0) {
-        patientQuery += `email=${emailsToSearch.join(",")}&`;
+        patientQuery += `telecom=${emailsToSearch.map(e => `${e}`).join(",")}&`;
       }
     }
 

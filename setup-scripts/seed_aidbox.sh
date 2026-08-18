@@ -71,6 +71,16 @@ curl "${CURL_OPTS[@]}" -X POST \
 
 echo "GoldenSickPatient data loaded successfully."
 
+# Post the BabyTestPatient data to Aidbox
+echo "Loading BabyTestPatient data into Aidbox..."
+curl "${CURL_OPTS[@]}" -X POST \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer ${TOKEN}" \
+  -d @"/data/BabyTestPatient.json" \
+  ${NETWORK_URL}/fhir
+
+echo "BabyTestPatient data loaded successfully."
+
 # Client information for the SMART on FHIR test
 echo "Loading client information into Aidbox..."
 curl "${CURL_OPTS[@]}" -X PUT \
