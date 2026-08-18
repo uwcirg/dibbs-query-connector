@@ -53,7 +53,7 @@ RUN npm run build
 FROM base AS runner
 WORKDIR /app
 
-RUN apk update && apk upgrade && apk add --no-cache bash openjdk17-jre
+RUN apk update && apk upgrade && apk add --no-cache bash openjdk17-jre su-exec
 # Copy RDS CA bundle for SSL database connections
 COPY --from=installer /rds-global-bundle.pem /app/certs/rds-global-bundle.pem
 # Copy Azure PostgreSQL CA bundle for SSL database connections
@@ -69,7 +69,8 @@ RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
 # Ensure writable directories
-RUN mkdir -p /app /data /logs
+RUN mkdir -p /app /data /logs /app/keys && \
+    chown -R nextjs:nodejs /app /data /logs /app/keys
 
 # Set hostname to localhost
 ENV HOSTNAME="0.0.0.0"
@@ -86,14 +87,13 @@ COPY --from=installer --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=installer --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=installer --chown=nextjs:nodejs /app/public ./public
 COPY --from=installer --chown=nextjs:nodejs /app/start.sh ./start.sh
+COPY docker-entrypoint.sh /docker-entrypoint.sh
+RUN chmod +x /docker-entrypoint.sh
 
 RUN chown -R nextjs:nodejs /app /data /logs
 
 RUN mkdir -p .next/static public && \
     chown -R nextjs:nodejs .next/static public
-
-USER nextjs
-
 
 RUN ls -R
 # Set environment variables for Flyway and Node.js telemetry
@@ -104,5 +104,7 @@ ENV JAVA_HOME=/usr/lib/jvm/default-jvm
 # Add the OpenJDK to the PATH so the java command is available for Flways
 ENV PATH=$JAVA_HOME/bin:$PATH
 
-ENTRYPOINT ["/bin/bash"]
-CMD ["/app/start.sh"]
+# Container still starts as root so the entrypoint can fix up ownership of
+# bind-mounted volumes (e.g. ./keys) before dropping to the nextjs user.
+ENTRYPOINT ["/docker-entrypoint.sh"]
+CMD ["/bin/bash", "/app/start.sh"]
