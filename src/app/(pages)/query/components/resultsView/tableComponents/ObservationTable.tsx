@@ -46,7 +46,7 @@ const ObservationTable: React.FC<ObservationTableProps> = ({
       </thead>
       <tbody>
         {observations.map((obs) => (
-          <tr key={obs.id}>
+          <tr key={obs.id} id={obs.id}>
             <td>{formatDate(obs?.issued || obs?.effectiveDateTime)}</td>
             <td>{formatCodeableConcept(obs.code)}</td>
             {availableElements.interpretation && (

@@ -34,7 +34,7 @@ const ImmunizationTable: React.FC<ImmunizationTableProps> = ({
       </thead>
       <tbody>
         {immunizations.map((immunization) => (
-          <tr key={immunization.id}>
+          <tr key={immunization.id} id={immunization.id}>
             <td>{formatDate(immunization.occurrenceDateTime)}</td>
             <td>{immunization.vaccineCode?.coding?.[0].display}</td>
             <td>

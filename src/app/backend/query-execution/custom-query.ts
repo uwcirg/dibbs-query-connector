@@ -178,14 +178,32 @@ export class CustomQuery {
         formattedParams.append("date", labsTimeFilter.endDate);
       }
 
+      const obsOnlyParams = {
+        "_revinclude": "DiagnosticReport:result",
+        "_include:iterate": "DiagnosticReport:result",
+      };
+      const obsParams = new URLSearchParams([
+        ...Array.from(formattedParams.entries()),
+        ...Object.entries(obsOnlyParams)
+      ]);
+      console.log(obsParams.toString());
       this.fhirResourceQueries["observation"] = {
         basePath: `/Observation/_search`,
-        params: formattedParams,
+        params: obsParams,
       };
 
+
+      const drOnlyParams = {
+        "_include": "DiagnosticReport:result",
+      };
+      const drParams = new URLSearchParams([
+        ...Array.from(formattedParams.entries()),
+        ...Object.entries(drOnlyParams)
+      ]);
+      console.log(drParams.toString());
       this.fhirResourceQueries["diagnosticReport"] = {
         basePath: `/DiagnosticReport/_search`,
-        params: formattedParams,
+        params: drParams,
       };
     }
 

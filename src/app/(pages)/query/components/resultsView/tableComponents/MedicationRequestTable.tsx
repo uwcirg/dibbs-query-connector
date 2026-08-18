@@ -47,7 +47,7 @@ const MedicationRequestTable: React.FC<MedicationRequestTableProps> = ({
       </thead>
       <tbody>
         {medicationRequests.map((medicationRequest) => (
-          <tr key={medicationRequest.id}>
+          <tr key={medicationRequest.id} id={medicationRequest.id}>
             <td>{formatDate(medicationRequest.authoredOn)}</td>
             <td>
               {formatCodeableConcept(
