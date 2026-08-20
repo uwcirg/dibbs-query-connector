@@ -1,5 +1,4 @@
 "use server";
-import { Bundle, Resource } from "fhir/r4";
 
 import { auditable } from "../audit-logs/decorator";
 import {
@@ -12,8 +11,8 @@ class UploadService {
   @auditable
   static async postFHIRBundle(
     fhirServer: string,
-    bundle: Bundle
-  ): Promise<{ status: number; ok: boolean; body: Resource}> {
+    bundle: unknown
+  ): Promise<{ status: number; ok: boolean; body: unknown}> {
     const fhirClient = await prepareFhirClient(fhirServer);
   
     // Get the server config to check for mutual TLS
@@ -60,7 +59,7 @@ class UploadService {
    */
   private static async handleStandardDiscovery(
     fhirClient: FHIRClient,
-    bundle: Bundle,
+    bundle: unknown,
   ): Promise<Response> {
     const endpoint = "/";
     return await fhirClient.postJson(endpoint, bundle);
