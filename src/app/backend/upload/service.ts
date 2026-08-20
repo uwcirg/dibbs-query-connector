@@ -1,23 +1,11 @@
 "use server";
 
-import { isFhirResource } from "../../constants";
-
-import { CustomQuery } from "./custom-query";
-import { GetPhoneQueryFormats } from "../../utils/format-service";
 import { auditable } from "../audit-logs/decorator";
-import type { QueryTableResult } from "../../(pages)/queryBuilding/utils";
-import type {
-  QueryResponse,
-  PatientDiscoveryRequest,
-  PatientRecordsRequest,
-  FullPatientRequest,
-} from "../../models/entities/query";
 import {
   getFhirServerConfigs,
   prepareFhirClient,
 } from "../fhir-servers/service";
 import type FHIRClient from "@/backend/fhir-servers/fhir-client";
-import { getSavedQueryByName } from "../query-building/service";
 
 class UploadService {
   @auditable

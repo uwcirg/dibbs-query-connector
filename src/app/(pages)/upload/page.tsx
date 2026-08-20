@@ -1,21 +1,11 @@
 "use client";
-import { useCallback, useContext, useEffect, useRef, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import {
-  Alert,
   Button,
   Icon,
-  Pagination,
   Select,
 } from "@trussworks/react-uswds";
-import { prepareFhirClient } from "@/app/backend/fhir-servers/service";
-import ResultsView from "./components/ResultsView";
-import PatientSearchResults from "./components/PatientSearchResults";
-import SearchForm from "./components/searchForm/SearchForm";
-import SelectQuery from "./components/SelectQuery";
 import { Mode } from "@/app/constants";
-import StepIndicator, {
-  CUSTOMIZE_QUERY_STEPS,
-} from "./components/stepIndicator/StepIndicator";
 import { DataContext } from "@/app/utils/DataProvider";
 import { Patient } from "fhir/r4";
 import { CustomUserQuery } from "@/app/models/entities/query";
