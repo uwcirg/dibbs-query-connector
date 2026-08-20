@@ -547,6 +547,8 @@ class FHIRClient {
       body: JSON.stringify(body),
       ...(this.init.headers as Record<string, string>),
     };
+    console.log("POST Request URL:", this.hostname + path);
+    console.log("POST Request Options:", requestOptions);
     return this.fetch(this.hostname + path, requestOptions);
   }
 
