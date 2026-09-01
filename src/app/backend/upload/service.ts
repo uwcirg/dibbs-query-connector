@@ -1,5 +1,6 @@
 "use server";
 
+import { Resource, Bundle } from "fhir/r4";
 import { auditable } from "../audit-logs/decorator";
 import {
   getFhirServerConfigs,
@@ -8,34 +9,34 @@ import {
 import type FHIRClient from "@/backend/fhir-servers/fhir-client";
 
 class UploadService {
-  private static getPatientEntryFromBundle(bundle: unknown) {
-    const patientEntry = bundle.entry.find(
+  private static getPatientEntryFromBundle(bundle: Bundle) {
+    const patientEntry = bundle?.entry.find(
       (entry) => entry.resource.resourceType === "Patient",
     );
     return patientEntry;
   }
 
-  private static getObservationEntriesFromBundle(bundle: unknown) {
-    const observationEntries = bundle.entry.filter(
+  private static getObservationEntriesFromBundle(bundle: Bundle) {
+    const observationEntries = bundle?.entry.filter(
       (entry) => entry.resource.resourceType === "Observation",
     );
     return observationEntries;
   }
 
-  private static getDiagnosticReportEntriesFromBundle(bundle: unknown) {
-    const diagnosticReportEntries = bundle.entry.filter(
+  private static getDiagnosticReportEntriesFromBundle(bundle: Bundle) {
+    const diagnosticReportEntries = bundle?.entry.filter(
       (entry) => entry.resource.resourceType === "DiagnosticReport",
     );
     return diagnosticReportEntries;
   }
 
-  private static async replaceEntryIdInBundle(oldid: string, newid: string, bundle: unknown) {
+  private static async replaceEntryIdInBundle(oldid: string, newid: string, bundle: Bundle) {
     const bundleString = JSON.stringify(bundle);
     const newBundle = JSON.parse(bundleString.replaceAll(oldid, newid));
     return newBundle;
   }
 
-  private static async postFHIRResource(fhirClient: FHIRClient, resource: unknown) {
+  private static async postFHIRResource(fhirClient: FHIRClient, resource: Resource) {
     let response: Response;
     response = await fhirClient.postJson("/"+resource?.resourceType, resource);
     console.log(response.status);
