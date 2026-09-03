@@ -10,21 +10,21 @@ import type FHIRClient from "@/backend/fhir-servers/fhir-client";
 
 class UploadService {
   private static getPatientEntryFromBundle(bundle: Bundle) {
-    const patientEntry = bundle?.entry.find(
+    const patientEntry = bundle?.entry?.find(
       (entry) => entry.resource.resourceType === "Patient",
     );
     return patientEntry;
   }
 
   private static getObservationEntriesFromBundle(bundle: Bundle) {
-    const observationEntries = bundle?.entry.filter(
+    const observationEntries = bundle?.entry?.filter(
       (entry) => entry.resource.resourceType === "Observation",
     );
     return observationEntries;
   }
 
   private static getDiagnosticReportEntriesFromBundle(bundle: Bundle) {
-    const diagnosticReportEntries = bundle?.entry.filter(
+    const diagnosticReportEntries = bundle?.entry?.filter(
       (entry) => entry.resource.resourceType === "DiagnosticReport",
     );
     return diagnosticReportEntries;
