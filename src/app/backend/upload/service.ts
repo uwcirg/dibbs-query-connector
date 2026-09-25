@@ -64,9 +64,13 @@ class UploadService {
     return { status: response.status, ok: response.ok, body };
   }
 
-  private static async handleFHIRBundle(fhirClient: FHIRClient, bundle: unknown) {
+  private static async handleFHIRBundle(fhirClient: FHIRClient, bundleInput: unknown) {
+    const bundle = bundleInput as Bundle;
     const patientEntry = this.getPatientEntryFromBundle(bundle);
     console.log(patientEntry);
+    if (!patientEntry?.fullUrl || !patientEntry.resource) {
+      throw new Error("Bundle is missing a valid Patient entry");
+    }
     const patientRef = patientEntry.fullUrl;
     const resource = patientEntry.resource;
     const response = await this.postFHIRResource(fhirClient, resource);
@@ -75,9 +79,10 @@ class UploadService {
     const newPatientRef = `${response.body.resourceType}/${patientId}`;
     const newBundle = await this.replaceEntryIdInBundle(patientRef, newPatientRef, bundle);
 
-    const observations = this.getObservationEntriesFromBundle(bundle);
+    const observations = this.getObservationEntriesFromBundle(bundle) ?? [];
     let observationBundle = newBundle;
     for (const observation of observations) {
+      if (!observation.fullUrl || !observation.resource) continue;
       const observationRef = observation.fullUrl;
       const observationResource = observation.resource;
       const observationResponse = await this.postFHIRResource(fhirClient, observationResource);
@@ -86,9 +91,10 @@ class UploadService {
       observationBundle = await this.replaceEntryIdInBundle(observationRef, newObservationRef, observationBundle);
     }
 
-    const diagnosticReports = this.getDiagnosticReportEntriesFromBundle(bundle);
+    const diagnosticReports = this.getDiagnosticReportEntriesFromBundle(bundle) ?? [];
     let diagnosticReportBundle = observationBundle;
     for (const diagnosticReport of diagnosticReports) {
+      if (!diagnosticReport.fullUrl || !diagnosticReport.resource) continue;
       const diagnosticReportRef = diagnosticReport.fullUrl;
       const diagnosticReportResource = diagnosticReport.resource;
       const diagnosticReportResponse = await this.postFHIRResource(fhirClient, diagnosticReportResource);
@@ -133,4 +139,9 @@ class UploadService {
   }
 }
 
-export const postFHIRBundle = UploadService.postFHIRBundle;
+export async function postFHIRBundle(
+  fhirServer: string,
+  bundle: unknown,
+): Promise<{ status: number; ok: boolean; body: unknown }> {
+  return UploadService.postFHIRBundle(fhirServer, bundle);
+}
