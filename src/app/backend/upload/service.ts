@@ -128,6 +128,7 @@ class UploadService {
    * Handles standard patient discovery using direct FHIR search
    * @param fhirClient - The FHIR client instance
    * @param patientQuery - The patient search query string
+   * @param bundle
    * @returns Promise resolving to the FHIR search response
    */
   private static async handleStandardDiscovery(
