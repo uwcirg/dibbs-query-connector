@@ -139,6 +139,14 @@ class UploadService {
   }
 }
 
+
+/**
+ * Post a fhir bundle containing Patient, DiagnosticReport, and Observation entries
+ * to a fhir server.
+ * @param fhirServer The name of the FHIR server to send the FHIR bundle to.
+ * @param bundle The bundle content to upload.
+ * @returns The compiled query string for that type.
+ */
 export async function postFHIRBundle(
   fhirServer: string,
   bundle: unknown,
