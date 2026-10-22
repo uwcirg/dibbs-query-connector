@@ -1,0 +1,221 @@
+# Full stack in Docker: Keycloak, Aidbox, and query-connector.
+#
+# Prerequisites:
+#   cp .env.sample .env
+#   Set ERSD_API_KEY, UMLS_API_KEY, AIDBOX_LICENSE, and AUTH_DISABLED=false in .env
+#
+# Start:
+#   docker compose -f docker-compose.complete.yaml up -d --build
+#
+# Reset DB so vs_dump.sql runs on first init:
+#   docker compose -f docker-compose.complete.yaml down -v
+#
+# Wait for seeding:
+#   docker compose -f docker-compose.complete.yaml logs -f aidbox-seeder
+#   # until: "Finished configuring Aidbox and database."
+
+services:
+  db:
+    image: "postgres:alpine"
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=pw
+      - POSTGRES_DB=tefca_db
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 2s
+      timeout: 5s
+      retries: 20
+    volumes:
+      - ./vs_dump.sql:/docker-entrypoint-initdb.d/vs_dump.sql
+      - db-data:/var/lib/postgresql
+    labels:
+      - traefik.enable=false
+    networks:
+      - internal
+  
+  flyway:
+    image: flyway/flyway:11-alpine
+    command: -configFiles=/flyway/conf/flyway.conf -schemas=public -connectRetries=60 migrate
+    volumes:
+      - ./flyway/sql:/flyway/sql
+      - ./flyway/conf/flyway.conf:/flyway/conf/flyway.conf
+    depends_on:
+      db:
+        condition: service_started
+    labels:
+      - traefik.enable=false
+    networks:
+      - internal
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.6
+    ports:
+      - 8081:8080
+    volumes:
+      - ./keycloak:/opt/keycloak/data/import
+    restart: always
+    command:
+      - start-dev
+      - --import-realm
+    environment:
+      KC_PROXY_HEADERS: xforwarded
+      KC_HOSTNAME: keycloak.${BASE_DOMAIN}
+      KC_HOSTNAME_STRICT: "false"
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      JAVA_TOOL_OPTIONS: ${JAVA_TOOL_OPTIONS:-}
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.keycloak-${COMPOSE_PROJECT_NAME}.rule=Host(`keycloak.${BASE_DOMAIN}`)
+      - traefik.http.routers.keycloak-${COMPOSE_PROJECT_NAME}.entrypoints=websecure
+      - traefik.http.routers.keycloak-${COMPOSE_PROJECT_NAME}.tls.certresolver=letsencrypt
+    networks:
+      - ingress
+      - internal
+  
+  aidbox_db:
+    image: healthsamurai/aidboxdb:17
+    volumes:
+      - aidbox_pg_data:/var/lib/postgresql/data:delegated
+    environment:
+      POSTGRES_USER: aidbox
+      POSTGRES_PORT: "5432"
+      POSTGRES_DB: aidbox
+      POSTGRES_PASSWORD: gOxAmiyiz4
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aidbox"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    labels:
+      - traefik.enable=false
+    networks:
+      - internal
+
+  aidbox:
+    image: healthsamurai/aidboxone:stable
+    pull_policy: always
+    ports: []
+    env_file:
+      - .env
+    environment:
+      AIDBOX_TERMINOLOGY_SERVICE_BASE_URL: https://tx.fhir.org/r4
+      AIDBOX_FHIR_PACKAGES: hl7.fhir.r4.core#4.0.1
+      AIDBOX_FHIR_SCHEMA_VALIDATION: true
+      AIDBOX_CREATED_AT_URL: https://aidbox.app/ex/createdAt
+      AIDBOX_CLIENT_SECRET: L6AGe_5V2O
+      AIDBOX_CORRECT_AIDBOX_FORMAT: true
+      AIDBOX_ADMIN_PASSWORD: OC1MzJ5QNV
+      AIDBOX_COMPLIANCE: enabled
+      AIDBOX_SECURITY_AUDIT__LOG_ENABLED: true
+      BOX_SEARCH_FHIR__COMPARISONS: true
+      PGHOST: aidbox_db
+      BOX_COMPATIBILITY_VALIDATION_JSON__SCHEMA_REGEX: "#{:fhir-datetime}"
+      BOX_SEARCH_AUTHORIZE_INLINE_REQUESTS: true
+      PGUSER: aidbox
+      AIDBOX_PORT: 8080
+      PGDATABASE: aidbox
+      PGPASSWORD: gOxAmiyiz4
+      PGPORT: "5432"
+      BOX_SEARCH_INCLUDE_CONFORMANT: true
+      BOX_WEB_BASE_URL: https://aidbox.${BASE_DOMAIN}
+      AIDBOX_BASE_URL: https://aidbox.${BASE_DOMAIN}
+      APP_HOSTNAME: https://query-connector.${BASE_DOMAIN}
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.aidbox-${COMPOSE_PROJECT_NAME}.rule=Host(`aidbox.${BASE_DOMAIN}`)
+      - traefik.http.routers.aidbox-${COMPOSE_PROJECT_NAME}.entrypoints=websecure
+      - traefik.http.routers.aidbox-${COMPOSE_PROJECT_NAME}.tls.certresolver=letsencrypt
+      - traefik.http.services.aidbox-${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=8080
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          'wget -qO- http://localhost:8080/health | grep -q ''"status":"pass"'' || exit 1',
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 60
+      start_period: 30s
+    depends_on:
+      aidbox_db:
+        condition: service_healthy
+    expose:
+      - 8080
+    networks:
+      - ingress
+      - internal
+  
+  aidbox-seeder:
+    build:
+      context: .
+      dockerfile: Dockerfile.aidbox-seeder
+    volumes:
+      - ./src/app/tests/assets/GoldenSickPatient.json:/data/GoldenSickPatient.json
+      - ./logs:/var/log
+    env_file:
+      - .env
+    environment:
+      AIDBOX_BASE_URL: https://aidbox.${BASE_DOMAIN}
+      APP_HOSTNAME: https://query-connector.${BASE_DOMAIN}
+    depends_on:
+      db:
+        condition: service_healthy
+      aidbox:
+        condition: service_healthy
+      flyway:
+        condition: service_completed_successfully
+    labels:
+      - traefik.enable=false
+    networks:
+      - internal
+
+  query-connector:
+    image: ghcr.io/cdcgov/dibbs-query-connector/query-connector:latest
+    env_file:
+      - .env
+    environment:
+      - AUTH_URL=https://query-connector.${BASE_DOMAIN}
+      - LOCAL_KEYCLOAK=https://keycloak.${BASE_DOMAIN}/realms/master
+      - NAMED_KEYCLOAK=https://keycloak.${BASE_DOMAIN}/realms/master
+      - AUTH_ISSUER=https://keycloak.${BASE_DOMAIN}/realms/master
+      - APP_HOSTNAME=https://query-connector.${BASE_DOMAIN}
+      - NODE_ENV=production
+      - DATABASE_URL=postgres://postgres:pw@db:5432/tefca_db
+      - AUTH_DISABLED=false
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=external_web
+      - traefik.http.routers.query-connector-${COMPOSE_PROJECT_NAME}.rule=Host(`query-connector.${BASE_DOMAIN}`)
+      - traefik.http.routers.query-connector-${COMPOSE_PROJECT_NAME}.entrypoints=websecure
+      - traefik.http.routers.query-connector-${COMPOSE_PROJECT_NAME}.tls.certresolver=letsencrypt
+      - traefik.http.services.query-connector-${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=3000
+    tty: true
+    volumes:
+      - ./keys:/app/keys
+    depends_on:
+      db:
+        condition: service_healthy
+      keycloak:
+        condition: service_started
+      aidbox-seeder:
+        condition: service_completed_successfully
+    ports: []
+    expose:
+      - 3000
+    networks:
+      - ingress
+      - internal
+
+volumes:
+  db-data:
+  aidbox_pg_data:
+
+networks:
+  internal:
+  ingress:
+    external: true
+    name: external_web
