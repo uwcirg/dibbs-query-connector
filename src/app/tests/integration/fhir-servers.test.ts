@@ -121,20 +121,20 @@ describe("FHIR Servers tests", () => {
       }
     });
 
-    it("should handle custom headers with basic auth", async () => {
+    it("should handle custom headers with bearer auth", async () => {
       const customHeaders = {
         "X-Custom-Header": "test-value",
         Authorization: "should-be-removed", // This should be removed
       };
 
       const result = await insertFhirServer(
-        "Test Server Basic Auth",
-        "http://test-basic-auth.com/fhir",
+        "Test Server Bearer Auth",
+        "http://test-basic-auth.com/fhir", // Url name matches authType's old "basic" value, now "bearer"
         false,
         false,
         true,
         {
-          authType: "basic",
+          authType: "bearer",
           bearerToken: "test-token-123",
           headers: customHeaders,
         },
@@ -144,7 +144,7 @@ describe("FHIR Servers tests", () => {
 
       const servers = await getFhirServerConfigs(true);
       const insertedServer = servers.find(
-        (s) => s.name === "Test Server Basic Auth",
+        (s) => s.name === "Test Server Bearer Auth",
       );
 
       expect(insertedServer).toBeDefined();

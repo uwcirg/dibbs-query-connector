@@ -20,6 +20,7 @@ import { ModalRef } from "@/app/ui/designSystem/modal/Modal";
 export type AuthMethodType =
   | "none"
   | "basic"
+  | "bearer"
   | "client_credentials"
   | "SMART"
   | "mutual-tls";
@@ -127,7 +128,7 @@ const FhirServers: React.FC = () => {
                   <td>{fhirServer.hostname}</td>
                   <td>
                     {fhirServer.authType ||
-                      (fhirServer.headers?.Authorization ? "basic" : "none")}
+                      (fhirServer.headers?.Authorization ? (fhirServer.headers.Authorization.startsWith("Bearer") ? "bearer" : "basic") : "none")}
                   </td>
                   <td width={480}>
                     <div className="grid-container grid-row padding-0 display-flex flex-align-center">
