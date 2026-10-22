@@ -32,7 +32,7 @@ const DiagnosticReportTable: React.FC<DiagnosticReportTableProps> = ({
       </thead>
       <tbody>
         {diagnosticReports.map((diagnosticReport) => (
-          <tr key={diagnosticReport.id}>
+          <tr key={diagnosticReport.id} id={diagnosticReport.id}>
             <td>{formatDate(diagnosticReport?.effectiveDateTime)}</td>
             <td>{formatCodeableConcept(diagnosticReport.code)}</td>
           </tr>

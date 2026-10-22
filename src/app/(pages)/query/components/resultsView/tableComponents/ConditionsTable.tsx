@@ -39,7 +39,7 @@ const ConditionsTable: React.FC<ConditionTableProps> = ({ conditions }) => {
       </thead>
       <tbody>
         {conditions.map((condition) => (
-          <tr key={condition.id}>
+          <tr key={condition.id} id={condition.id}>
             <td>{formatCodeableConcept(condition.code ?? {})}</td>
             {availableElements.clinicalStatus && (
               <td>{formatCodeableConcept(condition.clinicalStatus ?? {})}</td>

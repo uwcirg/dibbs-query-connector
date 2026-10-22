@@ -44,7 +44,7 @@ const EncounterTable: React.FC<EncounterTableProps> = ({
       </thead>
       <tbody>
         {encounters.map((encounter) => (
-          <tr key={encounter.id}>
+          <tr key={encounter.id} id={encounter.id}>
             <td>{formatCodeableConcept(encounter?.reasonCode?.[0])} </td>
             {availableElements?.class && (
               <td>{formatCoding(encounter?.class)}</td>
