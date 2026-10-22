@@ -1,0 +1,156 @@
+"use server";
+
+import { Resource, Bundle } from "fhir/r4";
+import { auditable } from "../audit-logs/decorator";
+import {
+  getFhirServerConfigs,
+  prepareFhirClient,
+} from "../fhir-servers/service";
+import type FHIRClient from "@/backend/fhir-servers/fhir-client";
+
+class UploadService {
+  private static getPatientEntryFromBundle(bundle: Bundle) {
+    const patientEntry = bundle?.entry?.find(
+      (entry) => entry.resource?.resourceType === "Patient",
+    );
+    return patientEntry;
+  }
+
+  private static getObservationEntriesFromBundle(bundle: Bundle) {
+    const observationEntries = bundle?.entry?.filter(
+      (entry) => entry.resource?.resourceType === "Observation",
+    );
+    return observationEntries;
+  }
+
+  private static getDiagnosticReportEntriesFromBundle(bundle: Bundle) {
+    const diagnosticReportEntries = bundle?.entry?.filter(
+      (entry) => entry.resource?.resourceType === "DiagnosticReport",
+    );
+    return diagnosticReportEntries;
+  }
+
+  private static async replaceEntryIdInBundle(oldid: string, newid: string, bundle: Bundle) {
+    const bundleString = JSON.stringify(bundle);
+    const newBundle = JSON.parse(bundleString.replaceAll(oldid, newid));
+    return newBundle;
+  }
+
+  private static async postFHIRResource(fhirClient: FHIRClient, resource: Resource) {
+    let response: Response;
+    response = await fhirClient.postJson("/"+resource?.resourceType, resource);
+    console.log(response.status);
+    // Check for errors
+    if (!response.ok) {
+      let errorText = "Match request failed for unknown reason";
+      let headerText = "Match request failed with unknown headers";
+  
+      try {
+        errorText = await response.text();
+      } catch {}
+  
+      try {
+        headerText = JSON.stringify(
+          Object.fromEntries(response.headers.entries()),
+        );
+      } catch {}
+  
+      console.error(
+        `Patient search failed. Status: ${response.status} \n Body: ${errorText} \n Headers: ${headerText}`,
+      );
+    }
+
+    const body = await response.json().catch(() => null);
+    return { status: response.status, ok: response.ok, body };
+  }
+
+  private static async handleFHIRBundle(fhirClient: FHIRClient, bundleInput: unknown) {
+    const bundle = bundleInput as Bundle;
+    const patientEntry = this.getPatientEntryFromBundle(bundle);
+    console.log(patientEntry);
+    if (!patientEntry?.fullUrl || !patientEntry.resource) {
+      throw new Error("Bundle is missing a valid Patient entry");
+    }
+    const patientRef = patientEntry.fullUrl;
+    const resource = patientEntry.resource;
+    const response = await this.postFHIRResource(fhirClient, resource);
+    console.log(response);
+    const patientId = response.body.id;
+    const newPatientRef = `${response.body.resourceType}/${patientId}`;
+    const newBundle = await this.replaceEntryIdInBundle(patientRef, newPatientRef, bundle);
+
+    const observations = this.getObservationEntriesFromBundle(bundle) ?? [];
+    let observationBundle = newBundle;
+    for (const observation of observations) {
+      if (!observation.fullUrl || !observation.resource) continue;
+      const observationRef = observation.fullUrl;
+      const observationResource = observation.resource;
+      const observationResponse = await this.postFHIRResource(fhirClient, observationResource);
+      const observationId = observationResponse.body.id;
+      const newObservationRef = `${observationResponse.body.resourceType}/${observationId}`;
+      observationBundle = await this.replaceEntryIdInBundle(observationRef, newObservationRef, observationBundle);
+    }
+
+    const diagnosticReports = this.getDiagnosticReportEntriesFromBundle(bundle) ?? [];
+    let diagnosticReportBundle = observationBundle;
+    for (const diagnosticReport of diagnosticReports) {
+      if (!diagnosticReport.fullUrl || !diagnosticReport.resource) continue;
+      const diagnosticReportRef = diagnosticReport.fullUrl;
+      const diagnosticReportResource = diagnosticReport.resource;
+      const diagnosticReportResponse = await this.postFHIRResource(fhirClient, diagnosticReportResource);
+      const diagnosticReportId = diagnosticReportResponse.body.id;
+      const newDiagnosticReportRef = `${diagnosticReportResponse.body.resourceType}/${diagnosticReportId}`;
+      diagnosticReportBundle = await this.replaceEntryIdInBundle(diagnosticReportRef, newDiagnosticReportRef, diagnosticReportBundle);
+    }
+
+    const finalBundle = diagnosticReportBundle;
+    return finalBundle;
+  }
+
+
+  @auditable
+  static async postFHIRBundle(
+    fhirServer: string,
+    bundle: unknown
+  ): Promise<{ status: number; ok: boolean; body: unknown}> {
+    const fhirClient = await prepareFhirClient(fhirServer);
+  
+    // Get the server config to check for mutual TLS
+    const serverConfigs = await getFhirServerConfigs();
+    const serverConfig = serverConfigs.find(
+      (config) => config.name === fhirServer,
+    );
+
+    return {status : 200, ok: true, body: await UploadService.handleFHIRBundle(fhirClient, bundle)};
+  }
+
+  /**
+   * Handles standard patient discovery using direct FHIR search
+   * @param fhirClient - The FHIR client instance
+   * @param patientQuery - The patient search query string
+   * @param bundle
+   * @returns Promise resolving to the FHIR search response
+   */
+  private static async handleStandardDiscovery(
+    fhirClient: FHIRClient,
+    bundle: unknown,
+  ): Promise<Response> {
+    const endpoint = "/";
+    return await fhirClient.postJson(endpoint, bundle);
+  }
+}
+
+
+/**
+ * Post a fhir bundle containing Patient, DiagnosticReport, and Observation entries
+ * to a fhir server.
+ * @param fhirServer The name of the FHIR server to send the FHIR bundle to.
+ * @param bundle The bundle content to upload.
+ * @returns The compiled query string for that type.
+ */
+export async function postFHIRBundle(
+  fhirServer: string,
+  bundle: unknown,
+): Promise<{ status: number; ok: boolean; body: unknown }> {
+  return UploadService.postFHIRBundle(fhirServer, bundle);
+}

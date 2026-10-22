@@ -12,6 +12,7 @@ export enum PAGES {
   AUDIT_LOGS = "/auditLogs",
   CODE_LIBRARY = "/codeLibrary",
   DOCS = "/docs",
+  UPLOAD = "/upload",
 }
 
 interface Page {
@@ -71,6 +72,13 @@ pagesConfig[PAGES.DOCS] = {
   path: PAGES.DOCS,
   name: "Documentation",
   roleAccess: [UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.STANDARD],
+};
+
+pagesConfig[PAGES.UPLOAD] = {
+  position: 7,
+  path: PAGES.UPLOAD,
+  name: "Upload data",
+  roleAccess: [UserRole.SUPER_ADMIN],
 };
 
 /**
